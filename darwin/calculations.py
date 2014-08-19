@@ -1,5 +1,5 @@
 import numpy as np
-from numba import double, int64, jit
+#from numba import double, int64, jit
 
 def image_difference(image1, image2):
     """For each pixel, determine the distance between colors in RGB-space.
@@ -23,4 +23,4 @@ def image_difference(image1, image2):
     return result
 
 
-fast_image_difference = jit(double[:,:](int64[:,:,:], int64[:,:,:]))(image_difference)
+#fast_image_difference = jit(double[:,:](int64[:,:,:], int64[:,:,:]))(image_difference)

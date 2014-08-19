@@ -25,7 +25,7 @@ class Creature:
 
 
     def __str__(self):
-        return 'Name:%s   Born:%d   Fitness:%.7f' % (self.name, self.birthdate, self.fitness)
+        return 'Name:%s   Born:%d   Fitness:%.7f' % (self.name, self.birthdate, self.get_fitness())
 
 
     def draw(self):
@@ -69,23 +69,11 @@ class Creature:
                 self.RGB[x][y] = targetRGB
 
 
-    def check_fitness_old(self):
-        """Use the environment's ideal color to check fitness and return
-        a value.  Value is based on the sum of the difference in RGB values."""
-        totalDiff = 0
-        for x in range(WIDTH):
-            for y in range(HEIGHT):
-                squareDiffs = [(self.RGB[x][y][band] - self.environment.idealColor[band])**2 for band in range(3)]
-                pixelDistance = np.sqrt(sum(squareDiffs))
-                totalDiff += pixelDistance
-        fitness = -totalDiff       # control the sensitivity of difference here
-        return fitness
-
-
     def check_fitness(self):
         """Use the environment's ideal creature to check fitness and return
         a value.  Value is based on the sum of the difference in RGB values."""
-        imageDiff = calculations.fast_image_difference(self.RGB, self.environment.idealCreature.RGB)
+        #imageDiff = calculations.fast_image_difference(self.RGB, self.environment.idealCreature.RGB)
+        imageDiff = calculations.image_difference(self.RGB, self.environment.idealCreature.RGB)
         return -(np.sum(imageDiff))       # control the sensitivity of difference here
 
 

@@ -9,7 +9,7 @@ from random import choice, shuffle
 from Creature import Creature
 
 DEATHRATE = 20  # absolute in number of creatures
-
+IDEAL_RGB = [128, 0, 128]
 
 class CreateCreatureThread(threading.Thread):
     def __init__(self, environment, parent, newName):
@@ -25,14 +25,12 @@ class CreateCreatureThread(threading.Thread):
 
 
 class Environment:
-    """A 'box' of Creatures. Creatures can reproduce 
-    (sometimes with a partner), get rewards, and die."""
-
+    """A 'box' of Creatures. Creatures can reproduce asexually and die."""
 
     def __init__(self, initialPopSize=50, cycleLimit=100):
         self.cycleLimit = cycleLimit        # max number of cycles to run the simulation
         self.cycle = 0                      # current cycle
-        self.idealColor = [128, 0, 128]     # the color that keeps things alive
+        self.idealColor = IDEAL_RGB     # the color that keeps things alive
         self.create_ideal()                 # make a creature of just this color
         self.sequence = itertools.count()   # generator for naming new creatures
         self.population = []                # list of creatures currently living in the environment
@@ -80,7 +78,17 @@ class Environment:
             newThread.start()
         for t in threads:
             t.join()
-            
+        
+
+    def evolve_one_generation(self):
+        """Take on step in generation (one cycle) to kill the weakest 
+        creatures and repopulate to fill the gaps."""
+        if self.cycle % 10 == 0:
+            print 'Cycle %d' % self.cycle
+        self.kill()
+        self.spawn()
+        self.cycle += 1
+
 
     def run(self):
         """Run the simulation. Cycle through kill() and spawn() until we reach 
@@ -91,16 +99,7 @@ class Environment:
             #    self.draw_ideal()
             #    for creature in self.population:
             #        creature.save_image('./images/initial/%s.png' % creature.name)
-
-            # Status update
-            if self.cycle % 100 == 0:
-                print 'Cycle %d' % self.cycle
-            #    for creature in self.population:
-            #        print creature.name, creature.fitness
-
-            self.kill()
-            self.spawn()
-            self.cycle += 1
+            self.evolve_one_generation()
 
 
     def end(self):
