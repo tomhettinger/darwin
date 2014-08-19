@@ -3,11 +3,25 @@ The Environment class is the environment that the creatures live in.  An instanc
 creatures themselves, as well as the rules and conditions that the creatures must survive in.
 """
 import itertools
+import threading
 from random import choice, shuffle
 
 from Creature import Creature
 
 DEATHRATE = 20  # absolute in number of creatures
+
+
+class CreateCreatureThread(threading.Thread):
+    def __init__(self, environment, parent, newName):
+        threading.Thread.__init__(self)
+        self.parent = parent
+        self.newName = newName
+        self.environment = environment
+
+    def run(self):
+        newCreature = self.parent.split(name=self.newName)
+        __ = newCreature.get_fitness()
+        self.environment.population.append(newCreature)
 
 
 class Environment:
@@ -19,6 +33,7 @@ class Environment:
         self.cycleLimit = cycleLimit        # max number of cycles to run the simulation
         self.cycle = 0                      # current cycle
         self.idealColor = [128, 0, 128]     # the color that keeps things alive
+        self.create_ideal()                 # make a creature of just this color
         self.sequence = itertools.count()   # generator for naming new creatures
         self.population = []                # list of creatures currently living in the environment
         self.populate(initialPopSize)
@@ -28,12 +43,15 @@ class Environment:
         return 'Current Cycle:%d   Current Size:%d ' % (self.cycle, len(self.population))
 
 
+    def create_ideal(self):
+        """Create a creature of a single ideal color."""
+        self.idealCreature = Creature(self, self.cycle, name='ideal')
+        self.idealCreature.set_to_color(self.idealColor)
+
+
     def draw_ideal(self):
         """Draw an ideal creature using this environment's ideal color."""
-        idealCreature = Creature(self, self.cycle, name='ideal')
-        idealCreature.set_to_color(self.idealColor)
-        idealCreature.save_image(fileName='./images/ideal.png')
-        del idealCreature
+        self.idealCreature.save_image(fileName='./images/ideal.png')
 
 
     def populate(self, popSize):
@@ -46,7 +64,7 @@ class Environment:
 
     def kill(self):
         """Kill the weakest DEATHRATE Creatures.  This is the first step in the simulation."""
-        self.population.sort(key=lambda creature: creature.fitness)  # sort by fitness
+        self.population.sort(key=lambda creature: creature.get_fitness())  # sort by fitness
         del self.population[:DEATHRATE]
         
 
@@ -55,27 +73,30 @@ class Environment:
         This is the second step in the simulation generation cycle."""
         parents = range(len(self.population))
         shuffle(parents)
+        threads = []
         for i in range(DEATHRATE):
-            newName = "creature_%06d" % next(self.sequence)
-            newCreature = self.population[parents[i]].split(self, self.cycle, name=newName)
-            self.population.append(newCreature)
-
+            newThread = CreateCreatureThread(environment=self, parent=self.population[parents[i]], newName="creature_%06d" % next(self.sequence))
+            threads.append(newThread)
+            newThread.start()
+        for t in threads:
+            t.join()
+            
 
     def run(self):
         """Run the simulation. Cycle through kill() and spawn() until we reach 
         the cycle limit."""
         while self.cycle < self.cycleLimit:
             # Draw initial conditions
-            if self.cycle == 0:
-                self.draw_ideal()
-                for creature in self.population:
-                    creature.save_image('./images/initial/%s.png' % creature.name)
+            #if self.cycle == 0:
+            #    self.draw_ideal()
+            #    for creature in self.population:
+            #        creature.save_image('./images/initial/%s.png' % creature.name)
 
             # Status update
             if self.cycle % 100 == 0:
                 print 'Cycle %d' % self.cycle
-                for creature in self.population:
-                    print creature.name, creature.fitness
+            #    for creature in self.population:
+            #        print creature.name, creature.fitness
 
             self.kill()
             self.spawn()
@@ -86,9 +107,6 @@ class Environment:
         """Draw Creatures and remove from memory."""
         print 'making images'
         print 'Cycle %d' % self.cycle
-        print len(self.population)
-        print self.population[0].name, sum(self.population[0].RGB)
-        print self.population[-1].name, sum(self.population[-1].RGB)
         for creature in self.population:
             print creature.name, creature.fitness
             creature.save_image('./images/final/%s.png' % creature.name)

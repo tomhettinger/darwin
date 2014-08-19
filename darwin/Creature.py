@@ -7,6 +7,8 @@ import copy
 import Image
 import numpy as np
 
+import calculations
+
 WIDTH = 8
 HEIGHT = 8
 
@@ -17,9 +19,9 @@ class Creature:
         self.name = name
         self.environment = environment
         imarray = np.random.rand(WIDTH, HEIGHT, 3) * 255
-        self.RGB = imarray.astype('uint8')
+        self.RGB = imarray.astype('int64')
         self.birthdate = birthcycle
-        self.fitness = self.check_fitness()
+        self.fitness = None
 
 
     def __str__(self):
@@ -54,6 +56,12 @@ class Creature:
         self.fitness = newValue
 
 
+    def get_fitness(self):
+        if self.fitness is None:
+            self.fitness = self.check_fitness()
+        return self.fitness
+
+
     def set_to_color(self, targetRGB):
         """Set the entire image to a singel color."""
         for x in range(WIDTH):
@@ -61,7 +69,7 @@ class Creature:
                 self.RGB[x][y] = targetRGB
 
 
-    def check_fitness(self):
+    def check_fitness_old(self):
         """Use the environment's ideal color to check fitness and return
         a value.  Value is based on the sum of the difference in RGB values."""
         totalDiff = 0
@@ -74,6 +82,13 @@ class Creature:
         return fitness
 
 
+    def check_fitness(self):
+        """Use the environment's ideal creature to check fitness and return
+        a value.  Value is based on the sum of the difference in RGB values."""
+        imageDiff = calculations.fast_image_difference(self.RGB, self.environment.idealCreature.RGB)
+        return -(np.sum(imageDiff))       # control the sensitivity of difference here
+
+
     def mutate(self, freq=0.125):
         """Get a new random RGB value for pixels.  The fraction of affected pixels
         is equal to the freq of mutation."""
@@ -84,9 +99,8 @@ class Creature:
             self.RGB[x][y] = np.random.randint(0, 255, 3)
 
 
-    def split(self, environment, cycle, name=None):
-        newCreature = Creature(environment, cycle, name)
+    def split(self, name=None):
+        newCreature = Creature(self.environment, self.environment.cycle, name)
         newCreature.RGB = self.RGB.copy()
         newCreature.mutate()
-        newCreature.set_fitness(newCreature.check_fitness())
         return newCreature
