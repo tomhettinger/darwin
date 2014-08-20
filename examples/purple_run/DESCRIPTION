@@ -1,0 +1,5 @@
+Running 20x20 = 400 creatures.
+Each creature is 8x8 pixels
+IDEAL_RGB = [128, 0, 128]
+Death rate = 20 creatures per generation (1/20 creatuers)
+Mutation frequency is 0.125 = 12.5% = 8 pixels.

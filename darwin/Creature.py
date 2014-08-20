@@ -9,9 +9,10 @@ import numpy as np
 
 import calculations
 
-WIDTH = 8
-HEIGHT = 8
-
+WIDTH = 16
+HEIGHT = 16
+#MUTATION_FREQ = 0.125
+MUTATION_FREQ = 0.1
 
 class Creature:
 
@@ -30,14 +31,14 @@ class Creature:
 
     def draw(self):
         """Draw the image and show it."""
-        im = Image.fromarray(self.RGB).convert('RGBA')
+        im = Image.fromarray(self.RGB).convert('RGB')
         im.show()
 
 
     def save_image(self, fileName=None):
         """Draw the image and save to disk."""
         print np.mean(self.RGB)
-        im = Image.fromarray(self.RGB).convert('RGBA')
+        im = Image.fromarray(self.RGB).convert('RGB')
         if fileName is not None:
             im.save(fileName, "PNG")
         else:
@@ -69,6 +70,15 @@ class Creature:
                 self.RGB[x][y] = targetRGB
 
 
+    def set_colors_from_image(self, idealImagePath):
+        """Open an image file and use this as the ideal creature."""
+        # Read in the image
+        origIm = Image.open(idealImagePath).convert('RGB')
+        im = origIm.rotate(90).resize((WIDTH, HEIGHT))
+        imarray = np.array(im.getdata()).reshape(WIDTH,HEIGHT,3)
+        self.RGB = imarray.astype('int64')
+
+
     def check_fitness(self):
         """Use the environment's ideal creature to check fitness and return
         a value.  Value is based on the sum of the difference in RGB values."""
@@ -77,11 +87,10 @@ class Creature:
         return -(np.sum(imageDiff))       # control the sensitivity of difference here
 
 
-    def mutate(self, freq=0.125):
+    def mutate(self, freq=MUTATION_FREQ):
         """Get a new random RGB value for pixels.  The fraction of affected pixels
         is equal to the freq of mutation."""
         mutationCount = int(HEIGHT*WIDTH*freq)
-        #np.random.seed()
         for i in range(mutationCount):
             x, y = np.random.randint(0, HEIGHT), np.random.randint(0, WIDTH)
             self.RGB[x][y] = np.random.randint(0, 255, 3)

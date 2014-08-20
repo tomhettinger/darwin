@@ -9,10 +9,9 @@ from Creature import HEIGHT as CREATURE_HEIGHT
 
 GREEN_COLOR = pygame.Color(0, 180, 64)
 IDEAL_COLOR = pygame.Color(*IDEAL_RGB)
-CREATURE_SPACING = CREATURE_WIDTH * 1.5
-POP_DIM = 20
+CREATURE_SPACING = CREATURE_WIDTH * 2
+POP_DIM = 8
 POPULATION_SIZE = POP_DIM * POP_DIM
-CYCLE_LIMIT = 600
 
 class Window:
     def __init__(self, width=800, height=600):
@@ -24,7 +23,7 @@ class Window:
         pygame.display.set_caption('Darwin')
 
         # Make the environment and creatures
-        self.environment = Environment(initialPopSize=POPULATION_SIZE, cycleLimit=CYCLE_LIMIT)
+        self.environment = Environment(initialPopSize=POPULATION_SIZE, idealImagePath='./examples/eye_run/eye.png')
 
         # Set up the 'initial generation' surface
         self.initialGenerationSurface = pygame.Surface((POP_DIM*CREATURE_SPACING, POP_DIM*CREATURE_SPACING))
@@ -39,6 +38,12 @@ class Window:
         self.populationSurface.fill(IDEAL_COLOR)
         self.cycleFont = pygame.font.Font(None, 24)
         self.creatureSurfaceList = self.create_empty_surfaces()
+
+        # The ideal creature
+        self.idealCreatureSurface = pygame.Surface((CREATURE_WIDTH, CREATURE_HEIGHT))
+        pygame.surfarray.blit_array(self.idealCreatureSurface, self.environment.idealCreature.RGB)
+        self.idealFont = pygame.font.Font(None, 24)
+        self.idealText = self.idealFont.render("Ideal Creature", 1, (10, 10, 10))
 
 
     def create_empty_surfaces(self):
@@ -92,6 +97,9 @@ class Window:
 
             # Draw and refresh various layers
             self.screen.fill(GREEN_COLOR)
+
+            self.screen.blit(self.idealCreatureSurface, (360, 150))
+            self.screen.blit(self.idealText, (310, 130))
 
             self.refresh_creature_display(self.initialGenerationSurface, self.initialCreatureSurfaceList)
             self.screen.blit(self.initialGenerationSurface, (100, 200))

@@ -8,7 +8,7 @@ from random import choice, shuffle
 
 from Creature import Creature
 
-DEATHRATE = 20  # absolute in number of creatures
+DEATHRATE = 60  # absolute in number of creatures
 IDEAL_RGB = [128, 0, 128]
 
 class CreateCreatureThread(threading.Thread):
@@ -27,11 +27,11 @@ class CreateCreatureThread(threading.Thread):
 class Environment:
     """A 'box' of Creatures. Creatures can reproduce asexually and die."""
 
-    def __init__(self, initialPopSize=50, cycleLimit=100):
+    def __init__(self, initialPopSize=50, cycleLimit=100, idealImagePath=None):
         self.cycleLimit = cycleLimit        # max number of cycles to run the simulation
         self.cycle = 0                      # current cycle
-        self.idealColor = IDEAL_RGB     # the color that keeps things alive
-        self.create_ideal()                 # make a creature of just this color
+        self.idealColor = IDEAL_RGB         # the color that keeps things alive
+        self.create_ideal(idealImagePath)   # make a creature of just this color
         self.sequence = itertools.count()   # generator for naming new creatures
         self.population = []                # list of creatures currently living in the environment
         self.populate(initialPopSize)
@@ -41,10 +41,13 @@ class Environment:
         return 'Current Cycle:%d   Current Size:%d ' % (self.cycle, len(self.population))
 
 
-    def create_ideal(self):
+    def create_ideal(self, idealImagePath=None):
         """Create a creature of a single ideal color."""
         self.idealCreature = Creature(self, self.cycle, name='ideal')
-        self.idealCreature.set_to_color(self.idealColor)
+        if idealImagePath is None:
+            self.idealCreature.set_to_color(self.idealColor)
+        else:
+            self.idealCreature.set_colors_from_image(idealImagePath)
 
 
     def draw_ideal(self):
@@ -70,10 +73,9 @@ class Environment:
         """Have the existing Creatures randomly reproduce to fill the DEATHRATE empty slots. 
         This is the second step in the simulation generation cycle."""
         parents = range(len(self.population))
-        shuffle(parents)
         threads = []
         for i in range(DEATHRATE):
-            newThread = CreateCreatureThread(environment=self, parent=self.population[parents[i]], newName="creature_%06d" % next(self.sequence))
+            newThread = CreateCreatureThread(environment=self, parent=self.population[choice(parents)], newName="creature_%06d" % next(self.sequence))
             threads.append(newThread)
             newThread.start()
         for t in threads:
@@ -94,11 +96,6 @@ class Environment:
         """Run the simulation. Cycle through kill() and spawn() until we reach 
         the cycle limit."""
         while self.cycle < self.cycleLimit:
-            # Draw initial conditions
-            #if self.cycle == 0:
-            #    self.draw_ideal()
-            #    for creature in self.population:
-            #        creature.save_image('./images/initial/%s.png' % creature.name)
             self.evolve_one_generation()
 
 
